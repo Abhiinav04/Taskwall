@@ -94,6 +94,7 @@ class TaskWallService : WallpaperService() {
         
         private val gradientPaint = Paint().apply {
             isAntiAlias = true
+            isDither = true
         }
 
         private var is24Hour: Boolean = false
@@ -112,6 +113,7 @@ class TaskWallService : WallpaperService() {
 
         override fun onCreate(surfaceHolder: SurfaceHolder?) {
             super.onCreate(surfaceHolder)
+            surfaceHolder?.setFormat(android.graphics.PixelFormat.RGBA_8888)
             
             engineScope.launch {
                 quoteRepository.populateInitialQuotesIfEmpty()
@@ -225,7 +227,7 @@ class TaskWallService : WallpaperService() {
             val dateWidth = datePaint.measureText(dateText)
             canvas.drawText(dateText, centerX - (dateWidth / 2f), startY, datePaint)
             
-            startY += clockPaint.textSize * 0.9f
+            startY += clockPaint.textSize * 1.05f
             val timeText = timeFormat.format(Date())
             val timeWidth = clockPaint.measureText(timeText)
             canvas.drawText(timeText, centerX - (timeWidth / 2f), startY, clockPaint)
