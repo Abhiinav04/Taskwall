@@ -39,6 +39,12 @@ class TaskRepository(private val taskDao: TaskDao) {
         taskDao.updateTask(task)
     }
 
+    suspend fun updateTasks(tasks: List<Task>) {
+        for (task in tasks) {
+            taskDao.updateTask(task)
+        }
+    }
+
     suspend fun completeTask(taskId: Long) {
         taskDao.completeTask(taskId, System.currentTimeMillis())
     }

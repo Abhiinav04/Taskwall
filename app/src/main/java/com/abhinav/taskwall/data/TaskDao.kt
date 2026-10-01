@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
-    @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY createdAt ASC")
+    @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY displayOrder ASC, createdAt ASC")
     fun getActiveTasks(): Flow<List<Task>>
 
     @Query("SELECT * FROM tasks WHERE isCompleted = 1 AND completedAt >= :dateStart AND completedAt < :dateEnd ORDER BY completedAt DESC")

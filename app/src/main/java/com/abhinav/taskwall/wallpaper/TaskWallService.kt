@@ -276,7 +276,7 @@ class TaskWallService : WallpaperService() {
             }
 
             // 4. Tasks (Left Aligned)
-            startY = height * 0.55f // Fixed starting point for tasks
+            startY = kotlin.math.max(startY + height * 0.06f, height * 0.45f) // Dynamic based on quote length
             val leftMargin = 100f
             
             canvas.drawText("TODAY", leftMargin, startY, sectionPaint)
@@ -287,13 +287,13 @@ class TaskWallService : WallpaperService() {
                 canvas.drawText("All clear.", leftMargin, startY, emptyPaint)
                 startY += emptyPaint.textSize * 1.8f
             } else {
-                for (task in todayTasks.take(6)) {
+                for (task in todayTasks.take(8)) {
                     canvas.drawText("• ${task.title}", leftMargin, startY, textPaint)
                     startY += textPaint.textSize * 1.8f
                 }
-                if (todayTasks.size > 6) {
+                if (todayTasks.size > 8) {
                     val morePaint = Paint(textPaint).apply { color = Color.GRAY }
-                    canvas.drawText("+ ${todayTasks.size - 6} more", leftMargin, startY, morePaint)
+                    canvas.drawText("+ ${todayTasks.size - 8} more", leftMargin, startY, morePaint)
                     startY += morePaint.textSize * 1.8f
                 }
             }
@@ -303,13 +303,13 @@ class TaskWallService : WallpaperService() {
                 canvas.drawText("TOMORROW", leftMargin, startY, sectionPaint)
                 startY += sectionPaint.textSize * 1.5f
                 
-                for (task in tomorrowTasks.take(4)) {
+                for (task in tomorrowTasks.take(6)) {
                     canvas.drawText("• ${task.title}", leftMargin, startY, textPaint)
                     startY += textPaint.textSize * 1.8f
                 }
-                if (tomorrowTasks.size > 4) {
+                if (tomorrowTasks.size > 6) {
                     val morePaint = Paint(textPaint).apply { color = Color.GRAY }
-                    canvas.drawText("+ ${tomorrowTasks.size - 4} more", leftMargin, startY, morePaint)
+                    canvas.drawText("+ ${tomorrowTasks.size - 6} more", leftMargin, startY, morePaint)
                 }
             }
         }

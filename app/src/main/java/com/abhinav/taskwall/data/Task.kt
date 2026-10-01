@@ -12,5 +12,6 @@ data class Task(
     val createdAt: Long = System.currentTimeMillis(),
     val targetDate: Long? = null,
     val isCompleted: Boolean = false,
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
+    val displayOrder: Int = 0
 )

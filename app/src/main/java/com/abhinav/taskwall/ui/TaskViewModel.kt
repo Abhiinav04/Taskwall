@@ -11,6 +11,7 @@ import com.abhinav.taskwall.data.TaskRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -32,6 +33,8 @@ class TaskViewModel(
     init {
         viewModelScope.launch {
             quoteRepository.populateInitialQuotesIfEmpty()
+            
+            // Removed dummy task population for production use
         }
     }
 
@@ -52,6 +55,24 @@ class TaskViewModel(
             val task = taskRepository.getTaskById(taskId)
             if (task != null) {
                 taskRepository.updateTask(task.copy(targetDate = targetDate))
+            }
+        }
+    }
+
+    fun moveTask(task: Task, moveUp: Boolean, currentList: List<Task>) {
+        viewModelScope.launch {
+            val index = currentList.indexOfFirst { it.id == task.id }
+            if (index == -1) return@launch
+            
+            val targetIndex = if (moveUp) index - 1 else index + 1
+            if (targetIndex in currentList.indices) {
+                val mutableList = currentList.mapIndexed { i, t -> t.copy(displayOrder = i) }.toMutableList()
+                val temp = mutableList[index]
+                mutableList[index] = mutableList[targetIndex].copy(displayOrder = index)
+                mutableList[targetIndex] = temp.copy(displayOrder = targetIndex)
+                
+                // Update the whole list to ensure sequence is maintained
+                taskRepository.updateTasks(mutableList)
             }
         }
     }

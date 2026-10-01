@@ -9,8 +9,10 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,7 +115,9 @@ fun HomeScreen(viewModel: TaskViewModel) {
                             TaskRow(
                                 task = task, 
                                 onChecked = { viewModel.completeTask(task.id) },
-                                onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) }
+                                onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
+                                onMoveUp = { viewModel.moveTask(task, true, todayTasks) },
+                                onMoveDown = { viewModel.moveTask(task, false, todayTasks) }
                             )
                         }
                     }
@@ -132,7 +136,9 @@ fun HomeScreen(viewModel: TaskViewModel) {
                             TaskRow(
                                 task = task, 
                                 onChecked = { viewModel.completeTask(task.id) },
-                                onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) }
+                                onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
+                                onMoveUp = { viewModel.moveTask(task, true, tomorrowTasks) },
+                                onMoveDown = { viewModel.moveTask(task, false, tomorrowTasks) }
                             )
                         }
                     }
@@ -217,7 +223,13 @@ fun HomeScreen(viewModel: TaskViewModel) {
 }
 
 @Composable
-fun TaskRow(task: Task, onChecked: () -> Unit, onShiftTask: (Long?) -> Unit) {
+fun TaskRow(
+    task: Task, 
+    onChecked: () -> Unit, 
+    onShiftTask: (Long?) -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit
+) {
     var showMenu by remember { mutableStateOf(false) }
 
     Row(
@@ -239,6 +251,20 @@ fun TaskRow(task: Task, onChecked: () -> Unit, onShiftTask: (Long?) -> Unit) {
             ),
             modifier = Modifier.weight(1f)
         )
+        
+        // Move Up Button
+        IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
+            Icon(
+                Icons.Filled.ArrowDropDown, 
+                contentDescription = "Move Up",
+                modifier = Modifier.rotate(180f)
+            )
+        }
+        
+        // Move Down Button
+        IconButton(onClick = onMoveDown, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Move Down")
+        }
         
         Box {
             IconButton(onClick = { showMenu = true }) {
