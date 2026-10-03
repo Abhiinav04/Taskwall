@@ -39,9 +39,15 @@ class TaskViewModel(
         }
     }
 
-    fun addTask(title: String, notes: String? = null, targetDate: Long? = null, color: Long? = null, recurrence: String? = null) {
+    fun addTask(title: String, notes: String? = null, targetDate: Long? = null, color: Long? = null, recurrence: String? = null, showOnWallpaper: Boolean = true) {
         viewModelScope.launch {
-            taskRepository.insertTask(title, notes, targetDate, color, recurrence)
+            taskRepository.insertTask(title, notes, targetDate, color, recurrence, showOnWallpaper)
+        }
+    }
+
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            taskRepository.updateTask(task)
         }
     }
 
@@ -68,7 +74,8 @@ class TaskViewModel(
                     notes = task.notes,
                     targetDate = cal.timeInMillis,
                     color = task.color,
-                    recurrence = task.recurrence
+                    recurrence = task.recurrence,
+                    showOnWallpaper = task.showOnWallpaper
                 )
             }
         }

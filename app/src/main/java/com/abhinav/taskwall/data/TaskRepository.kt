@@ -29,14 +29,15 @@ class TaskRepository(private val taskDao: TaskDao) {
         return taskDao.getTaskById(id)
     }
 
-    suspend fun insertTask(title: String, notes: String?, targetDate: Long? = null, color: Long? = null, recurrence: String? = null) {
+    suspend fun insertTask(title: String, notes: String?, targetDate: Long? = null, color: Long? = null, recurrence: String? = null, showOnWallpaper: Boolean = true) {
         val task = Task(
             title = title,
             notes = notes,
             createdAt = System.currentTimeMillis(),
             targetDate = targetDate,
             color = color,
-            recurrence = recurrence
+            recurrence = recurrence,
+            showOnWallpaper = showOnWallpaper
         )
         taskDao.insertTask(task)
     }

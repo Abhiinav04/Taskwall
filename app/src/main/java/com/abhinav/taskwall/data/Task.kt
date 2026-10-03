@@ -15,5 +15,6 @@ data class Task(
     val completedAt: Long? = null,
     val displayOrder: Int = 0,
     val color: Long? = null, // Store Color.toArgb().toLong() for categorization
-    val recurrence: String? = null // e.g., "DAILY", "WEEKLY"
+    val recurrence: String? = null, // e.g., "DAILY", "WEEKLY"
+    val showOnWallpaper: Boolean = true
 )

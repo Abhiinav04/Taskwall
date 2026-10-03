@@ -337,9 +337,12 @@ class TaskWallService : WallpaperService() {
             
             for (taskWithSubtasks in currentTasks) {
                 val t = taskWithSubtasks.task
+                
+                if (!t.showOnWallpaper) continue
+                
                 if (t.targetDate != null && t.targetDate >= tomorrowStart && t.targetDate < tomorrowEnd) {
                     tomorrowTasks.add(taskWithSubtasks)
-                } else {
+                } else if (t.targetDate == null || t.targetDate < tomorrowStart) {
                     todayTasks.add(taskWithSubtasks)
                 }
             }
