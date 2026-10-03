@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
+    @androidx.room.Transaction
+    @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY displayOrder ASC, createdAt ASC")
+    fun getActiveTasksWithSubtasks(): Flow<List<TaskWithSubtasks>>
+
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY displayOrder ASC, createdAt ASC")
     fun getActiveTasks(): Flow<List<Task>>
 
@@ -33,4 +37,17 @@ interface TaskDao {
     
     @Query("UPDATE tasks SET isCompleted = 1, completedAt = :completedAt WHERE id = :taskId")
     suspend fun completeTask(taskId: Long, completedAt: Long): Int
+
+    // SubTask Operations
+    @Query("SELECT * FROM subtasks WHERE taskId = :taskId ORDER BY displayOrder ASC")
+    fun getSubTasksForTask(taskId: Long): Flow<List<SubTask>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSubTask(subTask: SubTask): Long
+
+    @Update
+    suspend fun updateSubTask(subTask: SubTask): Int
+
+    @Query("DELETE FROM subtasks WHERE id = :subTaskId")
+    suspend fun deleteSubTask(subTaskId: Long): Int
 }

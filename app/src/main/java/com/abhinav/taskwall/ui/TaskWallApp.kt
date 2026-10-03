@@ -30,7 +30,8 @@ import com.abhinav.taskwall.ui.settings.SettingsScreen
 @Composable
 fun TaskWallApp(
     viewModel: TaskViewModel = viewModel(),
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    openAddTask: Boolean = false
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -71,17 +72,7 @@ fun TaskWallApp(
                         }
                     }
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Star, contentDescription = "Quotes") },
-                    label = { Text("Quotes") },
-                    selected = currentRoute == "quotes",
-                    onClick = {
-                        navController.navigate("quotes") {
-                            popUpTo(navController.graph.startDestinationId)
-                            launchSingleTop = true
-                        }
-                    }
-                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
                     label = { Text("Settings") },
@@ -101,7 +92,7 @@ fun TaskWallApp(
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(viewModel) }
+            composable("home") { HomeScreen(viewModel, openAddTask) }
             composable("calendar") { CalendarScreen(viewModel) }
             composable("history") { HistoryScreen(viewModel) }
             composable("quotes") { QuotesScreen(viewModel) }

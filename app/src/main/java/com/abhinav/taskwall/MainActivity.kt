@@ -27,9 +27,11 @@ class MainActivity : ComponentActivity() {
         val factory = TaskViewModelFactory(taskRepository, quoteRepository, appPreferences)
         val viewModel = ViewModelProvider(this, factory)[TaskViewModel::class.java]
 
+        val openAddTask = intent.getBooleanExtra("OPEN_ADD_TASK", false)
+
         setContent {
             TaskWallTheme {
-                TaskWallApp(viewModel = viewModel)
+                TaskWallApp(viewModel = viewModel, openAddTask = openAddTask)
             }
         }
     }

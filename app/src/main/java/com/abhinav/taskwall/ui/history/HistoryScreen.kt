@@ -48,8 +48,53 @@ fun HistoryScreen(viewModel: TaskViewModel) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Activity (Last 14 Days)", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Activity (Last 14 Days)", style = MaterialTheme.typography.titleMedium)
+                            
+                            // Calculate current streak
+                            var currentStreak = 0
+                            val today = Calendar.getInstance()
+                            today.set(Calendar.HOUR_OF_DAY, 0)
+                            today.set(Calendar.MINUTE, 0)
+                            today.set(Calendar.SECOND, 0)
+                            today.set(Calendar.MILLISECOND, 0)
+                            
+                            for (i in 0..30) {
+                                val cal = Calendar.getInstance()
+                                cal.timeInMillis = today.timeInMillis
+                                cal.add(Calendar.DAY_OF_YEAR, -i)
+                                val dayStart = cal.timeInMillis
+                                val dayEnd = dayStart + 86400000L
+                                
+                                val completedThatDay = history.count { 
+                                    it.completedAt != null && it.completedAt!! >= dayStart && it.completedAt!! < dayEnd 
+                                }
+                                if (completedThatDay > 0) {
+                                    currentStreak++
+                                } else if (i > 0) {
+                                    break // Broken streak (ignoring if today is 0 so far)
+                                }
+                            }
+                            
+                            if (currentStreak > 0) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text(
+                                        "🔥 $currentStreak Day Streak",
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                         
                         Row(
                             modifier = Modifier.fillMaxWidth(),

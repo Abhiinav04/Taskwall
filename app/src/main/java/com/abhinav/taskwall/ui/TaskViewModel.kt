@@ -7,6 +7,7 @@ import com.abhinav.taskwall.data.AppPreferences
 import com.abhinav.taskwall.data.Quote
 import com.abhinav.taskwall.data.QuoteRepository
 import com.abhinav.taskwall.data.Task
+import com.abhinav.taskwall.data.SubTask
 import com.abhinav.taskwall.data.TaskRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,15 +39,38 @@ class TaskViewModel(
         }
     }
 
-    fun addTask(title: String, notes: String? = null, targetDate: Long? = null) {
+    fun addTask(title: String, notes: String? = null, targetDate: Long? = null, color: Long? = null, recurrence: String? = null) {
         viewModelScope.launch {
-            taskRepository.insertTask(title, notes, targetDate)
+            taskRepository.insertTask(title, notes, targetDate, color, recurrence)
         }
     }
 
     fun completeTask(taskId: Long) {
         viewModelScope.launch {
+            val task = taskRepository.getTaskById(taskId)
             taskRepository.completeTask(taskId)
+            
+            // Recurrence logic
+            if (task != null && task.recurrence != null) {
+                val cal = Calendar.getInstance()
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                
+                when (task.recurrence) {
+                    "DAILY" -> cal.add(Calendar.DAY_OF_YEAR, 1)
+                    "WEEKLY" -> cal.add(Calendar.DAY_OF_YEAR, 7)
+                }
+                
+                taskRepository.insertTask(
+                    title = task.title,
+                    notes = task.notes,
+                    targetDate = cal.timeInMillis,
+                    color = task.color,
+                    recurrence = task.recurrence
+                )
+            }
         }
     }
 
@@ -77,22 +101,57 @@ class TaskViewModel(
         }
     }
 
+    // Preferences & Settings
     val is24Hour: StateFlow<Boolean> = appPreferences.is24Hour
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val showSeconds: StateFlow<Boolean> = appPreferences.showSeconds
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val fontFamily: StateFlow<String?> = appPreferences.fontFamily
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val themeColor: StateFlow<Long?> = appPreferences.themeColor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val particleEffectsEnabled: StateFlow<Boolean> = appPreferences.particleEffectsEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val activePomodoroTaskId: StateFlow<Long?> = appPreferences.activePomodoroTaskId
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val pomodoroEndTime: StateFlow<Long?> = appPreferences.pomodoroEndTime
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     fun set24Hour(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferences.set24Hour(enabled)
-        }
+        viewModelScope.launch { appPreferences.set24Hour(enabled) }
     }
 
     fun setShowSeconds(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferences.setShowSeconds(enabled)
+        viewModelScope.launch { appPreferences.setShowSeconds(enabled) }
+    }
+
+    fun setFontFamily(font: String?) {
+        viewModelScope.launch { appPreferences.setFontFamily(font) }
+    }
+
+    fun setThemeColor(color: Long?) {
+        viewModelScope.launch { appPreferences.setThemeColor(color) }
+    }
+
+    fun setParticleEffectsEnabled(enabled: Boolean) {
+        viewModelScope.launch { appPreferences.setParticleEffectsEnabled(enabled) }
+    }
+
+    fun startPomodoro(taskId: Long, durationMinutes: Int) {
+        viewModelScope.launch { 
+            val endTime = System.currentTimeMillis() + (durationMinutes * 60 * 1000L)
+            appPreferences.setPomodoroState(taskId, endTime)
         }
+    }
+
+    fun stopPomodoro() {
+        viewModelScope.launch { appPreferences.setPomodoroState(null, null) }
     }
 
     fun searchTasks(query: String): StateFlow<List<Task>> {
@@ -101,6 +160,24 @@ class TaskViewModel(
 
     fun getCompletedTasks(dateStart: Long, dateEnd: Long): StateFlow<List<Task>> {
         return taskRepository.getCompletedTasks(dateStart, dateEnd).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+
+    // SubTask Operations
+    fun getSubTasksForTask(taskId: Long): StateFlow<List<SubTask>> {
+        return taskRepository.getSubTasksForTask(taskId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+
+    fun addSubTask(taskId: Long, title: String) {
+        viewModelScope.launch { taskRepository.addSubTask(taskId, title) }
+    }
+
+    fun toggleSubTaskCompletion(subTask: SubTask) {
+        viewModelScope.launch { taskRepository.updateSubTask(subTask.copy(isCompleted = !subTask.isCompleted)) }
+    }
+
+    fun deleteSubTask(subTaskId: Long) {
+        viewModelScope.launch { taskRepository.deleteSubTask(subTaskId) }
     }
 }
 

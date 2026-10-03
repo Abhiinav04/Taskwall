@@ -22,6 +22,13 @@ class AppPreferences(private val context: Context) {
         val LOCKED_BACKGROUND_PATH = stringPreferencesKey("locked_background_path")
         val IS_24_HOUR = androidx.datastore.preferences.core.booleanPreferencesKey("is_24_hour")
         val SHOW_SECONDS = androidx.datastore.preferences.core.booleanPreferencesKey("show_seconds")
+        
+        // New features preferences
+        val FONT_FAMILY = stringPreferencesKey("font_family")
+        val THEME_COLOR = longPreferencesKey("theme_color")
+        val PARTICLE_EFFECTS_ENABLED = androidx.datastore.preferences.core.booleanPreferencesKey("particle_effects_enabled")
+        val ACTIVE_POMODORO_TASK_ID = longPreferencesKey("active_pomodoro_task_id")
+        val POMODORO_END_TIME = longPreferencesKey("pomodoro_end_time")
     }
 
     val currentQuoteId: Flow<Long?> = dataStore.data.map { preferences ->
@@ -43,6 +50,12 @@ class AppPreferences(private val context: Context) {
     val showSeconds: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[SHOW_SECONDS] ?: false
     }
+    
+    val fontFamily: Flow<String?> = dataStore.data.map { it[FONT_FAMILY] }
+    val themeColor: Flow<Long?> = dataStore.data.map { it[THEME_COLOR] }
+    val particleEffectsEnabled: Flow<Boolean> = dataStore.data.map { it[PARTICLE_EFFECTS_ENABLED] ?: false }
+    val activePomodoroTaskId: Flow<Long?> = dataStore.data.map { it[ACTIVE_POMODORO_TASK_ID] }
+    val pomodoroEndTime: Flow<Long?> = dataStore.data.map { it[POMODORO_END_TIME] }
 
     suspend fun setCurrentQuoteId(id: Long) {
         dataStore.edit { preferences ->
@@ -75,6 +88,22 @@ class AppPreferences(private val context: Context) {
     suspend fun setShowSeconds(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SHOW_SECONDS] = enabled
+        }
+    }
+
+    suspend fun setFontFamily(font: String?) {
+        dataStore.edit { if (font == null) it.remove(FONT_FAMILY) else it[FONT_FAMILY] = font }
+    }
+    suspend fun setThemeColor(color: Long?) {
+        dataStore.edit { if (color == null) it.remove(THEME_COLOR) else it[THEME_COLOR] = color }
+    }
+    suspend fun setParticleEffectsEnabled(enabled: Boolean) {
+        dataStore.edit { it[PARTICLE_EFFECTS_ENABLED] = enabled }
+    }
+    suspend fun setPomodoroState(taskId: Long?, endTime: Long?) {
+        dataStore.edit { 
+            if (taskId == null) it.remove(ACTIVE_POMODORO_TASK_ID) else it[ACTIVE_POMODORO_TASK_ID] = taskId
+            if (endTime == null) it.remove(POMODORO_END_TIME) else it[POMODORO_END_TIME] = endTime
         }
     }
 }

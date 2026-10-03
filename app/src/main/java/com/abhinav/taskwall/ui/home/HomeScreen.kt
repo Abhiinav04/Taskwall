@@ -16,19 +16,26 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.abhinav.taskwall.data.Task
+import com.abhinav.taskwall.data.SubTask
 import com.abhinav.taskwall.ui.TaskViewModel
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: TaskViewModel) {
+fun HomeScreen(viewModel: TaskViewModel, openAddTask: Boolean = false) {
     val allTasks by viewModel.activeTasks.collectAsState()
-    var showAddTaskDialog by remember { mutableStateOf(false) }
+    var showAddTaskDialog by remember { mutableStateOf(openAddTask) }
     var voiceInputText by remember { mutableStateOf("") }
     var showVoiceConfirmation by remember { mutableStateOf(false) }
     
@@ -117,7 +124,9 @@ fun HomeScreen(viewModel: TaskViewModel) {
                                 onChecked = { viewModel.completeTask(task.id) },
                                 onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
                                 onMoveUp = { viewModel.moveTask(task, true, todayTasks) },
-                                onMoveDown = { viewModel.moveTask(task, false, todayTasks) }
+                                onMoveDown = { viewModel.moveTask(task, false, todayTasks) },
+                                onStartPomodoro = { viewModel.startPomodoro(task.id, 25) },
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -138,7 +147,9 @@ fun HomeScreen(viewModel: TaskViewModel) {
                                 onChecked = { viewModel.completeTask(task.id) },
                                 onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
                                 onMoveUp = { viewModel.moveTask(task, true, tomorrowTasks) },
-                                onMoveDown = { viewModel.moveTask(task, false, tomorrowTasks) }
+                                onMoveDown = { viewModel.moveTask(task, false, tomorrowTasks) },
+                                onStartPomodoro = { viewModel.startPomodoro(task.id, 25) },
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -151,6 +162,10 @@ fun HomeScreen(viewModel: TaskViewModel) {
         var title by remember { mutableStateOf("") }
         var notes by remember { mutableStateOf("") }
         var isTomorrow by remember { mutableStateOf(false) }
+        var selectedColor by remember { mutableStateOf<Long?>(null) }
+        var recurrence by remember { mutableStateOf<String?>(null) }
+
+        val colors = listOf(null, 0xFFE53935, 0xFF43A047, 0xFF1E88E5, 0xFFFDD835, 0xFF8E24AA)
 
         AlertDialog(
             onDismissRequest = { showAddTaskDialog = false },
@@ -176,13 +191,45 @@ fun HomeScreen(viewModel: TaskViewModel) {
                         Checkbox(checked = isTomorrow, onCheckedChange = { isTomorrow = it })
                         Text("For Tomorrow")
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Category Color:", style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
+                        colors.forEach { colorVal ->
+                            val isSelected = selectedColor == colorVal
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .background(
+                                        color = if (colorVal != null) Color(colorVal) else Color.Gray.copy(alpha = 0.3f),
+                                        shape = CircleShape
+                                    )
+                                    .border(
+                                        width = if (isSelected) 2.dp else 0.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                        shape = CircleShape
+                                    )
+                                    .clickable { selectedColor = colorVal }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Repeat:", style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(null to "None", "DAILY" to "Daily", "WEEKLY" to "Weekly").forEach { (value, label) ->
+                            FilterChip(
+                                selected = recurrence == value,
+                                onClick = { recurrence = value },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     if (title.isNotBlank()) {
                         val targetDate = if (isTomorrow) tomorrowStart else null
-                        viewModel.addTask(title, notes.takeIf { it.isNotBlank() }, targetDate)
+                        viewModel.addTask(title, notes.takeIf { it.isNotBlank() }, targetDate, selectedColor, recurrence)
                         showAddTaskDialog = false
                     }
                 }) {
@@ -228,7 +275,9 @@ fun TaskRow(
     onChecked: () -> Unit, 
     onShiftTask: (Long?) -> Unit,
     onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit
+    onMoveDown: () -> Unit,
+    onStartPomodoro: () -> Unit,
+    viewModel: TaskViewModel
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -244,13 +293,34 @@ fun TaskRow(
             onCheckedChange = { onChecked() }
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = task.title,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            modifier = Modifier.weight(1f)
-        )
+        
+        if (task.color != null) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(
+                        Color(task.color),
+                        CircleShape
+                    )
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                )
+            )
+            if (task.recurrence != null) {
+                Text(
+                    text = "↻ ${task.recurrence.lowercase().replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         
         // Move Up Button
         IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
@@ -294,7 +364,92 @@ fun TaskRow(
                         showMenu = false
                     }
                 )
+                // Pomodoro option
+                DropdownMenuItem(
+                    text = { Text("Start Pomodoro (25m)") },
+                    onClick = {
+                        onStartPomodoro()
+                        showMenu = false
+                    }
+                )
             }
+        }
+    }
+    
+    // Sub-tasks section
+    val subtasks by viewModel.getSubTasksForTask(task.id).collectAsState(initial = emptyList<SubTask>())
+    var isExpanded by remember { mutableStateOf(false) }
+    var newSubtaskTitle by remember { mutableStateOf("") }
+    
+    if (subtasks.isNotEmpty() || isExpanded) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 48.dp, bottom = 4.dp)
+            .clickable { isExpanded = !isExpanded }
+        ) {
+            Text(
+                if (isExpanded) "▼ Hide Sub-tasks (${subtasks.count { it.isCompleted }}/${subtasks.size})" 
+                else "▶ Show Sub-tasks (${subtasks.count { it.isCompleted }}/${subtasks.size})",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    } else {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 48.dp, bottom = 4.dp)
+            .clickable { isExpanded = true }
+        ) {
+            Text(
+                "+ Add Sub-tasks",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+    
+    if (isExpanded) {
+        Column(modifier = Modifier.padding(start = 48.dp, bottom = 8.dp, end = 16.dp)) {
+            subtasks.forEach { subtask ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = subtask.isCompleted,
+                        onCheckedChange = { viewModel.toggleSubTaskCompletion(subtask) },
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Text(
+                        text = subtask.title,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { viewModel.deleteSubTask(subtask.id) }, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Filled.Add, modifier = Modifier.rotate(45f), contentDescription = "Delete Subtask")
+                    }
+                }
+            }
+            
+            OutlinedTextField(
+                value = newSubtaskTitle,
+                onValueChange = { newSubtaskTitle = it },
+                placeholder = { Text("Add sub-task...", style = MaterialTheme.typography.bodySmall) },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                textStyle = MaterialTheme.typography.bodySmall,
+                trailingIcon = {
+                    IconButton(onClick = { 
+                        if (newSubtaskTitle.isNotBlank()) {
+                            viewModel.addSubTask(task.id, newSubtaskTitle)
+                            newSubtaskTitle = ""
+                        }
+                    }) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add")
+                    }
+                }
+            )
         }
     }
 }
