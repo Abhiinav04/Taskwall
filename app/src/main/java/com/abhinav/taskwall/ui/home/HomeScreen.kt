@@ -130,7 +130,6 @@ fun HomeScreen(viewModel: TaskViewModel, openAddTask: Boolean = false) {
                                 onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
                                 onMoveUp = { viewModel.moveTask(task, true, todayTasks) },
                                 onMoveDown = { viewModel.moveTask(task, false, todayTasks) },
-                                onStartPomodoro = { viewModel.startPomodoro(task.id, 25) },
                                 onEditTask = { taskToEdit = task },
                                 viewModel = viewModel
                             )
@@ -154,7 +153,6 @@ fun HomeScreen(viewModel: TaskViewModel, openAddTask: Boolean = false) {
                                 onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
                                 onMoveUp = { viewModel.moveTask(task, true, tomorrowTasks) },
                                 onMoveDown = { viewModel.moveTask(task, false, tomorrowTasks) },
-                                onStartPomodoro = { viewModel.startPomodoro(task.id, 25) },
                                 onEditTask = { taskToEdit = task },
                                 viewModel = viewModel
                             )
@@ -178,7 +176,6 @@ fun HomeScreen(viewModel: TaskViewModel, openAddTask: Boolean = false) {
                                 onShiftTask = { targetDate -> viewModel.shiftTaskTargetDate(task.id, targetDate) },
                                 onMoveUp = { viewModel.moveTask(task, true, upcomingTasks) },
                                 onMoveDown = { viewModel.moveTask(task, false, upcomingTasks) },
-                                onStartPomodoro = { viewModel.startPomodoro(task.id, 25) },
                                 onEditTask = { taskToEdit = task },
                                 viewModel = viewModel
                             )
@@ -467,7 +464,6 @@ fun TaskRow(
     onShiftTask: (Long?) -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
-    onStartPomodoro: () -> Unit,
     onEditTask: () -> Unit,
     viewModel: TaskViewModel
 ) {
@@ -567,14 +563,7 @@ fun TaskRow(
                         showMenu = false
                     }
                 )
-                // Pomodoro option
-                DropdownMenuItem(
-                    text = { Text("Start Pomodoro (25m)") },
-                    onClick = {
-                        onStartPomodoro()
-                        showMenu = false
-                    }
-                )
+
             }
         }
     }

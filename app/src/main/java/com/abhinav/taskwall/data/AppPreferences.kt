@@ -27,8 +27,6 @@ class AppPreferences(private val context: Context) {
         val FONT_FAMILY = stringPreferencesKey("font_family")
         val THEME_COLOR = longPreferencesKey("theme_color")
         val PARTICLE_EFFECTS_ENABLED = androidx.datastore.preferences.core.booleanPreferencesKey("particle_effects_enabled")
-        val ACTIVE_POMODORO_TASK_ID = longPreferencesKey("active_pomodoro_task_id")
-        val POMODORO_END_TIME = longPreferencesKey("pomodoro_end_time")
     }
 
     val currentQuoteId: Flow<Long?> = dataStore.data.map { preferences ->
@@ -54,8 +52,6 @@ class AppPreferences(private val context: Context) {
     val fontFamily: Flow<String?> = dataStore.data.map { it[FONT_FAMILY] }
     val themeColor: Flow<Long?> = dataStore.data.map { it[THEME_COLOR] }
     val particleEffectsEnabled: Flow<Boolean> = dataStore.data.map { it[PARTICLE_EFFECTS_ENABLED] ?: false }
-    val activePomodoroTaskId: Flow<Long?> = dataStore.data.map { it[ACTIVE_POMODORO_TASK_ID] }
-    val pomodoroEndTime: Flow<Long?> = dataStore.data.map { it[POMODORO_END_TIME] }
 
     suspend fun setCurrentQuoteId(id: Long) {
         dataStore.edit { preferences ->
@@ -99,11 +95,5 @@ class AppPreferences(private val context: Context) {
     }
     suspend fun setParticleEffectsEnabled(enabled: Boolean) {
         dataStore.edit { it[PARTICLE_EFFECTS_ENABLED] = enabled }
-    }
-    suspend fun setPomodoroState(taskId: Long?, endTime: Long?) {
-        dataStore.edit { 
-            if (taskId == null) it.remove(ACTIVE_POMODORO_TASK_ID) else it[ACTIVE_POMODORO_TASK_ID] = taskId
-            if (endTime == null) it.remove(POMODORO_END_TIME) else it[POMODORO_END_TIME] = endTime
-        }
     }
 }

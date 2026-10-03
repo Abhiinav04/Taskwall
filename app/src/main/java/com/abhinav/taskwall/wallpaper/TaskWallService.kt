@@ -60,8 +60,7 @@ class TaskWallService : WallpaperService() {
         
         // New Features State
         private var particleEffectsEnabled = true
-        private var activePomodoroTaskId: Long? = null
-        private var pomodoroEndTime: Long? = null
+
         private var particles = Array(50) { Particle() }
 
         private fun checkAndUpdateQuoteIfNeeded() {
@@ -175,20 +174,6 @@ class TaskWallService : WallpaperService() {
                     }
                 }
 
-                launch {
-                    appPreferences.activePomodoroTaskId.collect { taskId ->
-                        activePomodoroTaskId = taskId
-                        if (visible) requestDraw()
-                    }
-                }
-                
-                launch {
-                    appPreferences.pomodoroEndTime.collect { endTime ->
-                        pomodoroEndTime = endTime
-                        if (visible) requestDraw()
-                    }
-                }
-
                 taskRepository.getActiveTasksWithSubtasks().collect { tasks ->
                     currentTasks = tasks
                     if (visible) {
@@ -245,8 +230,7 @@ class TaskWallService : WallpaperService() {
             
             if (visible) {
                 handler.removeCallbacks(drawRunnable)
-                val isPomodoroActive = activePomodoroTaskId != null && pomodoroEndTime != null && pomodoroEndTime!! > System.currentTimeMillis()
-                val delayMs = if (isPomodoroActive || particleEffectsEnabled || showSeconds) {
+                val delayMs = if (particleEffectsEnabled || showSeconds) {
                     33L // ~30 fps for smooth particles or countdown
                 } else {
                     60000L - (System.currentTimeMillis() % 60000L)
@@ -350,36 +334,8 @@ class TaskWallService : WallpaperService() {
             // 4. Tasks (Left Aligned)
             startY = kotlin.math.max(startY + height * 0.06f, height * 0.45f) // Dynamic based on quote length
             
-            // Draw Pomodoro if active
-            val now = System.currentTimeMillis()
-            var pomodoroDrawn = false
-            if (activePomodoroTaskId != null && pomodoroEndTime != null && pomodoroEndTime!! > now) {
-                val remainingMs = pomodoroEndTime!! - now
-                val mins = (remainingMs / 1000) / 60
-                val secs = (remainingMs / 1000) % 60
-                val timerText = String.format("⏱ %02d:%02d", mins, secs)
-                val activeTaskItem = currentTasks.find { it.task.id == activePomodoroTaskId }
-                
-                if (activeTaskItem != null) {
-                    canvas.drawText("FOCUS", centerX - (sectionPaint.measureText("FOCUS") / 2f), startY, sectionPaint)
-                    startY += sectionPaint.textSize * 1.5f
-                    val titleWidth = textPaint.measureText(activeTaskItem.task.title)
-                    canvas.drawText(activeTaskItem.task.title, centerX - (titleWidth / 2f), startY, textPaint)
-                    startY += textPaint.textSize * 1.5f
-                    
-                    val pTimerPaint = Paint(clockPaint).apply { textSize = 90f; color = Color.parseColor("#EF4444") }
-                    val tWidth = pTimerPaint.measureText(timerText)
-                    canvas.drawText(timerText, centerX - (tWidth / 2f), startY, pTimerPaint)
-                    startY += pTimerPaint.textSize * 1.2f
-                    pomodoroDrawn = true
-                }
-            }
-            
+
             val leftMargin = 100f
-            
-            if (pomodoroDrawn) {
-                startY += height * 0.05f
-            }
             
             canvas.drawText("TODAY", leftMargin, startY, sectionPaint)
             startY += sectionPaint.textSize * 1.5f

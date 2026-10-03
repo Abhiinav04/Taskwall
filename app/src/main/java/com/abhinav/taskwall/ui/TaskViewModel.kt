@@ -124,12 +124,6 @@ class TaskViewModel(
     val particleEffectsEnabled: StateFlow<Boolean> = appPreferences.particleEffectsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    val activePomodoroTaskId: StateFlow<Long?> = appPreferences.activePomodoroTaskId
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
-    val pomodoroEndTime: StateFlow<Long?> = appPreferences.pomodoroEndTime
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
     fun set24Hour(enabled: Boolean) {
         viewModelScope.launch { appPreferences.set24Hour(enabled) }
     }
@@ -148,17 +142,6 @@ class TaskViewModel(
 
     fun setParticleEffectsEnabled(enabled: Boolean) {
         viewModelScope.launch { appPreferences.setParticleEffectsEnabled(enabled) }
-    }
-
-    fun startPomodoro(taskId: Long, durationMinutes: Int) {
-        viewModelScope.launch { 
-            val endTime = System.currentTimeMillis() + (durationMinutes * 60 * 1000L)
-            appPreferences.setPomodoroState(taskId, endTime)
-        }
-    }
-
-    fun stopPomodoro() {
-        viewModelScope.launch { appPreferences.setPomodoroState(null, null) }
     }
 
     fun searchTasks(query: String): StateFlow<List<Task>> {
